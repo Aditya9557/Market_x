@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import API from '../../api/axios';
 
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://market-x-2.onrender.com';
+
 const statusFlow = ['confirmed', 'preparing', 'ready', 'hero_assigned', 'picked_up', 'in_transit', 'delivered'];
 
 const statusInfo: Record<string, { label: string; emoji: string; desc: string }> = {
@@ -70,7 +72,7 @@ const TrackDelivery = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const socket = io('http://localhost:5001', { auth: { token } });
+        const socket = io(SOCKET_URL, { auth: { token } });
 
         socket.on('connect', () => {
             console.log('🔌 Tracking socket connected');
