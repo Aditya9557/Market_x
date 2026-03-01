@@ -1,0 +1,10 @@
+
+> vite-project@0.0.0 dev
+> vite --host
+
+
+  VITE v7.3.1  ready in 222 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://192.168.0.100:5173/
+  ➜  press h + enter to show help

@@ -1,0 +1,67 @@
+
+> backend@1.0.0 dev
+> nodemon -e ts,json --exec "npx tsc && node dist/server.js"
+
+[33m[nodemon] 3.1.11[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: ts,json[39m
+[32m[nodemon] starting `npx tsc && node dist/server.js`[39m
+ℹ️  Sentry DSN not set — error tracking disabled
+ValidationError: Custom keyGenerator appears to use request IP without calling the ipKeyGenerator helper function for IPv6 addresses. This could allow IPv6 users to bypass limits. See https://express-rate-limit.github.io/ERR_ERL_KEY_GEN_IPV6/ for more information.
+    at Object.keyGeneratorIpFallback (/Users/adityachaubey/Documents/Market_x/backend/node_modules/express-rate-limit/dist/index.cjs:637:13)
+    at wrappedValidations.<computed> [as keyGeneratorIpFallback] (/Users/adityachaubey/Documents/Market_x/backend/node_modules/express-rate-limit/dist/index.cjs:680:22)
+    at parseOptions (/Users/adityachaubey/Documents/Market_x/backend/node_modules/express-rate-limit/dist/index.cjs:750:16)
+    at rateLimit (/Users/adityachaubey/Documents/Market_x/backend/node_modules/express-rate-limit/dist/index.cjs:831:18)
+    at Object.<anonymous> (/Users/adityachaubey/Documents/Market_x/backend/dist/middleware/rateLimiter.js:42:62)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object..js (node:internal/modules/cjs/loader:1893:10)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14) {
+  code: 'ERR_ERL_KEY_GEN_IPV6',
+  help: 'https://express-rate-limit.github.io/ERR_ERL_KEY_GEN_IPV6/'
+}
+ValidationError: Custom keyGenerator appears to use request IP without calling the ipKeyGenerator helper function for IPv6 addresses. This could allow IPv6 users to bypass limits. See https://express-rate-limit.github.io/ERR_ERL_KEY_GEN_IPV6/ for more information.
+    at Object.keyGeneratorIpFallback (/Users/adityachaubey/Documents/Market_x/backend/node_modules/express-rate-limit/dist/index.cjs:637:13)
+    at wrappedValidations.<computed> [as keyGeneratorIpFallback] (/Users/adityachaubey/Documents/Market_x/backend/node_modules/express-rate-limit/dist/index.cjs:680:22)
+    at parseOptions (/Users/adityachaubey/Documents/Market_x/backend/node_modules/express-rate-limit/dist/index.cjs:750:16)
+    at rateLimit (/Users/adityachaubey/Documents/Market_x/backend/node_modules/express-rate-limit/dist/index.cjs:831:18)
+    at Object.<anonymous> (/Users/adityachaubey/Documents/Market_x/backend/dist/middleware/rateLimiter.js:51:59)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object..js (node:internal/modules/cjs/loader:1893:10)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14) {
+  code: 'ERR_ERL_KEY_GEN_IPV6',
+  help: 'https://express-rate-limit.github.io/ERR_ERL_KEY_GEN_IPV6/'
+}
+[dotenv@17.3.1] injecting env (13) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+⚠️  Supabase not configured. Real-time features will fall back to Socket.io.
+(node:78286) [MONGOOSE] Warning: Duplicate schema index on {"token":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:78286) [MONGOOSE] Warning: Duplicate schema index on {"orderNumber":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+✅ MongoDB Connected: 127.0.0.1
+✅ Redis connected
+2026-02-28 15:51:47 INFO  Server running on port 5001
+2026-02-28 15:51:47 INFO  Socket.io WebSocket server ready
+2026-02-28 15:51:47 INFO  Health check: /api/health
+2026-02-28 15:51:47 INFO  Routes: /api/auth, /api/admin, /api/stores, /api/products, /api/cart, /api/orders, /api/vendor/*, /api/hero, /api/payments, /api/campus, /api/disputes
+2026-02-28 15:51:47 INFO  Reconciliation cron scheduled — next run in 938 min
+2026-02-28 15:51:47 INFO  Reconciliation cron registered (runs daily at 02:00 UTC)
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: read EIO
+    at TTY.onStreamRead (node:internal/stream_base_commons:216:20)
+Emitted 'error' event on ReadStream instance at:
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  errno: -5,
+  code: 'EIO',
+  syscall: 'read'
+}
+
+Node.js v24.13.0

@@ -1,0 +1,360 @@
+{
+    "info": {
+        "name": "Market_x Production APIs",
+        "_postman_id": "market-x-prod-2026",
+        "description": "Full API collection for Market_x platform — includes all production-grade endpoints.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:5001"
+        },
+        {
+            "key": "token",
+            "value": ""
+        },
+        {
+            "key": "refreshToken",
+            "value": ""
+        }
+    ],
+    "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Signup (Student)",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/auth/signup",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Test Student\",\n  \"email\": \"student@test.com\",\n  \"password\": \"password123\",\n  \"role\": \"student\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Signup (Shopkeeper)",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/auth/signup",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Test Vendor\",\n  \"email\": \"vendor@test.com\",\n  \"password\": \"password123\",\n  \"role\": \"shopkeeper\",\n  \"shopName\": \"Test Shop\",\n  \"category\": \"food\",\n  \"zone\": \"main_market\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/auth/login",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"student@test.com\",\n  \"password\": \"password123\"\n}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "pm.collectionVariables.set('token', jsonData.token);",
+                                    "pm.collectionVariables.set('refreshToken', jsonData.refreshToken);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Refresh Token",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/auth/refresh",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "pm.collectionVariables.set('token', jsonData.token);",
+                                    "pm.collectionVariables.set('refreshToken', jsonData.refreshToken);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/auth/logout",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Health",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/api/health"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Payments",
+            "item": [
+                {
+                    "name": "Create Payment Intent",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/payments/create-intent",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"orderId\": \"<ORDER_ID>\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Webhook (Stripe)",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/payments/webhook",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "stripe-signature",
+                                "value": "<STRIPE_SIG>"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"id\": \"evt_test_123\",\n  \"type\": \"payment_intent.succeeded\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"pi_test_123\",\n      \"amount\": 50000,\n      \"metadata\": { \"order_id\": \"<ORDER_ID>\" }\n    }\n  }\n}"
+                        },
+                        "description": "⚠️ In production, Stripe sends this automatically with a valid signature. For local testing, use Stripe CLI: stripe listen --forward-to localhost:5001/api/payments/webhook"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Disputes",
+            "item": [
+                {
+                    "name": "File Dispute (Student)",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/disputes",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"orderId\": \"<ORDER_ID>\",\n  \"reason\": \"wrong_item\",\n  \"description\": \"I ordered a textbook but received the wrong edition.\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "My Disputes",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/api/disputes/my",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Admin: Get All Disputes",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/admin/disputes?status=open&page=1&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "disputes"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status",
+                                    "value": "open"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        },
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Admin: Resolve Dispute (Full Refund)",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{baseUrl}}/api/admin/disputes/<DISPUTE_ID>/resolve",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"resolution\": \"refund_full\",\n  \"adminNotes\": \"Verified wrong item was sent. Full refund issued.\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Admin: Resolve Dispute (Partial Refund)",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{baseUrl}}/api/admin/disputes/<DISPUTE_ID>/resolve",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"resolution\": \"refund_partial\",\n  \"refundAmount\": 150,\n  \"adminNotes\": \"Partial refund for inconvenience.\"\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Hero",
+            "item": [
+                {
+                    "name": "Accept Delivery (with lock)",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/hero/accept/<ORDER_ID>",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"tip\": 20\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin Analytics",
+            "item": [
+                {
+                    "name": "Platform Overview Stats",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/api/admin/stats/overview",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

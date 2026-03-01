@@ -1,0 +1,273 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────
+   UNI-HEART DESIGN SYSTEM — Global Tokens
+   ───────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  /* Brand */
+  --uh-coral:       #FF6B57;
+  --uh-coral-dark:  #e85a47;
+  --uh-coral-glow:  rgba(255, 107, 87, 0.25);
+  --uh-green:       #0F9D58;
+  --uh-green-glow:  rgba(15, 157, 88, 0.2);
+  --uh-yellow:      #FFCC00;
+  --uh-yellow-glow: rgba(255, 204, 0, 0.2);
+
+  /* Surfaces */
+  --uh-bg:          #0d0d14;
+  --uh-surface:     #12121e;
+  --uh-card:        #18182a;
+  --uh-card-border: rgba(255,255,255,0.07);
+  --uh-card-hover:  rgba(255,255,255,0.1);
+
+  /* Text */
+  --uh-text:        #f0f0f8;
+  --uh-text-muted:  #6E7581;
+  --uh-text-faint:  #3a3a50;
+
+  /* Status */
+  --uh-error:       #D93A3A;
+  --uh-success:     #2ECC71;
+}
+
+/* ─── Base ─── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  background-color: var(--uh-bg);
+  color: var(--uh-text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--uh-bg); }
+::-webkit-scrollbar-thumb { background: rgba(255,107,87,0.25); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,107,87,0.45); }
+
+/* ─── Selection ─── */
+::selection { background: rgba(255,107,87,0.3); color: #fff; }
+
+/* ─── Links ─── */
+a { color: inherit; text-decoration: none; }
+
+/* ─── Utility classes ─── */
+
+/* Cards */
+.uh-card {
+  background: var(--uh-card);
+  border: 1px solid var(--uh-card-border);
+  border-radius: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.uh-card:hover {
+  border-color: rgba(255,107,87,0.25);
+  box-shadow: 0 8px 32px rgba(255,107,87,0.08);
+}
+.uh-card-flat {
+  background: var(--uh-card);
+  border: 1px solid var(--uh-card-border);
+  border-radius: 16px;
+}
+
+/* Buttons */
+.uh-btn-primary {
+  background: linear-gradient(135deg, #FF6B57 0%, #FF3B5C 100%);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
+  box-shadow: 0 6px 20px rgba(255,107,87,0.3);
+  font-family: inherit;
+}
+.uh-btn-primary:hover { opacity: 0.9; box-shadow: 0 8px 28px rgba(255,107,87,0.4); }
+.uh-btn-primary:active { transform: scale(0.97); }
+.uh-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+.uh-btn-outline {
+  background: transparent;
+  color: var(--uh-coral);
+  border: 1.5px solid rgba(255,107,87,0.4);
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: inherit;
+}
+.uh-btn-outline:hover { background: rgba(255,107,87,0.08); border-color: rgba(255,107,87,0.7); }
+
+.uh-btn-ghost {
+  background: rgba(255,255,255,0.05);
+  color: var(--uh-text);
+  border: 1px solid var(--uh-card-border);
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+.uh-btn-ghost:hover { background: rgba(255,255,255,0.09); }
+
+/* Inputs */
+.uh-input {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  color: #fff;
+  padding: 12px 16px;
+  width: 100%;
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+.uh-input:focus { border-color: rgba(255,107,87,0.5); }
+.uh-input::placeholder { color: var(--uh-text-faint); }
+
+/* Chips / filter pills */
+.uh-chip {
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1.5px solid rgba(255,255,255,0.08);
+  color: var(--uh-text-muted);
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.uh-chip:hover { border-color: rgba(255,107,87,0.3); color: var(--uh-coral); }
+.uh-chip.active {
+  border-color: rgba(255,107,87,0.5);
+  color: var(--uh-coral);
+  background: rgba(255,107,87,0.1);
+  box-shadow: 0 0 12px rgba(255,107,87,0.15);
+}
+
+/* Badge */
+.uh-badge-green {
+  padding: 2px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(15,157,88,0.15);
+  color: #0F9D58;
+  border: 1px solid rgba(15,157,88,0.3);
+}
+.uh-badge-coral {
+  padding: 2px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255,107,87,0.15);
+  color: #FF6B57;
+  border: 1px solid rgba(255,107,87,0.3);
+}
+.uh-badge-yellow {
+  padding: 2px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255,204,0,0.12);
+  color: #FFCC00;
+  border: 1px solid rgba(255,204,0,0.25);
+}
+
+/* Section label */
+.uh-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--uh-text-muted);
+}
+
+/* Divider */
+.uh-divider {
+  height: 1px;
+  background: var(--uh-card-border);
+  margin: 16px 0;
+}
+
+/* Spinner */
+.uh-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255,107,87,0.2);
+  border-top-color: #FF6B57;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Glow pulse for online status */
+.uh-online-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--uh-green);
+  box-shadow: 0 0 0 0 rgba(15,157,88,0.6);
+  animation: pulse-green 1.5s ease-out infinite;
+}
+
+/* Toast */
+.uh-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #18182a;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 12px 20px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  z-index: 9999;
+  font-size: 14px;
+  font-weight: 600;
+  animation: slideUp 0.25s ease;
+}
+.uh-toast.success { border-color: rgba(46,204,113,0.4); color: #2ECC71; }
+.uh-toast.error   { border-color: rgba(217,58,58,0.4);  color: #ff6b6b; }
+.uh-toast.info    { border-color: rgba(255,107,87,0.4); color: #FF6B57; }
+
+/* ─── Keyframes ─── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse-green {
+  0%   { box-shadow: 0 0 0 0 rgba(15,157,88,0.6); }
+  70%  { box-shadow: 0 0 0 8px rgba(15,157,88,0); }
+  100% { box-shadow: 0 0 0 0 rgba(15,157,88,0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes float {
+  from { transform: translateY(0) rotate(0deg); }
+  to   { transform: translateY(-16px) rotate(8deg); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Page fade-in */
+.uh-page { animation: fadeIn 0.25s ease; }
+
+/* Autofill override */
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 100px #12121a inset !important;
+  -webkit-text-fill-color: #fff !important;
+}
