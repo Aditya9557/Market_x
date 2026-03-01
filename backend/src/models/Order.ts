@@ -102,7 +102,6 @@ const OrderSchema: Schema = new Schema({
 OrderSchema.index({ user: 1, type: 1 });
 OrderSchema.index({ store: 1, type: 1 });
 OrderSchema.index({ parentOrder: 1 });
-OrderSchema.index({ orderNumber: 1 });
 OrderSchema.index({ status: 1 });
 
 // Generate order number BEFORE validation (pre-validate runs before required checks)
