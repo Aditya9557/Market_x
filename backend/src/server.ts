@@ -25,6 +25,8 @@ import healthRoutes from './routes/healthRoutes';
 import { initSocket } from './socket/socketServer';
 import { getSupabase } from './services/supabaseService';
 import { startReconciliationCron } from './services/reconciliationService';
+import growthRoutes from './routes/growthRoutes';
+import { startBusinessAnalyticsCron } from './scripts/businessAnalyticsWorker';
 import helmet from 'helmet';
 
 dotenv.config();
@@ -103,6 +105,9 @@ app.use('/api/uniguide', uniGuideRoutes);
 // Dispute routes
 app.use('/api/disputes', disputeRoutes);
 
+// Growth engine routes (founder dashboard, campaigns, referrals, pricing, ops, investor)
+app.use('/api', growthRoutes);
+
 // ─── ERROR HANDLING ─────────────────────────────────────────
 
 app.use(globalErrorHandler);
@@ -128,6 +133,8 @@ const startServer = async () => {
         if (process.env.NODE_ENV !== 'test') {
             startReconciliationCron();
             logger.info('Reconciliation cron registered (runs daily at 02:00 UTC)');
+            startBusinessAnalyticsCron();
+            logger.info('Business analytics cron registered (01:00 UTC snapshot, 09:00 UTC retention)');
         }
     });
 };

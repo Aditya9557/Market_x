@@ -11,6 +11,7 @@ import AdminAuditLog from './pages/admin/AdminAuditLog';
 import AdminRiskDashboard from './pages/admin/AdminRiskDashboard';
 import AdminReconciliation from './pages/admin/AdminReconciliation';
 import AdminCampusConfig from './pages/admin/AdminCampusConfig';
+import AdminAnalyticsDashboard from './pages/admin/AdminAnalyticsDashboard';
 import ProductCatalog from './pages/student/ProductCatalog';
 import ProductDetail from './pages/student/ProductDetail';
 import CartPage from './pages/student/CartPage';
@@ -145,6 +146,10 @@ const Navigation = () => {
                 <Link to="/admin/campus-config"
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${isActive('/admin/campus-config') ? 'bg-blue-700 text-white' : 'text-blue-300 hover:bg-gray-700'}`}>
                   🏫 Config
+                </Link>
+                <Link to="/admin/analytics"
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${isActive('/admin/analytics') ? 'bg-orange-600 text-white' : 'text-orange-400 hover:bg-gray-700'}`}>
+                  📊 Analytics
                 </Link>
               </>
             )}
@@ -315,6 +320,11 @@ function App() {
               <Route path="/admin/campus-config" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminCampusConfig />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/analytics" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminAnalyticsDashboard />
                 </ProtectedRoute>
               } />
 
