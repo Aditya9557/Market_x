@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-const API = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'https://market-x-vppt.onrender.com/api',
-});
+// Ensure baseURL always ends with /api
+const rawUrl = import.meta.env.VITE_API_URL || 'https://market-x-vppt.onrender.com/api';
+const baseURL = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl.replace(/\/+$/, '')}/api`;
+
+const API = axios.create({ baseURL });
 
 // ── Request interceptor: attach access token ────────────────────────────────
 API.interceptors.request.use((req) => {
