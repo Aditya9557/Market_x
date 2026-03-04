@@ -12,7 +12,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import API from '../api/axios';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://market-x-2.onrender.com';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://market-x-vppt.onrender.com';
 const EMIT_INTERVAL_MS = 8000;     // 8s — per Phase-1 battery rules
 const HTTP_FALLBACK_MS = 30000;    // 30s HTTP fallback
 

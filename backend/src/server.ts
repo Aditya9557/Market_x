@@ -55,8 +55,25 @@ app.use(generalLimiter);
 // We mount it here before the JSON parser
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
-// JSON parser for all other routes
-app.use(cors());
+// CORS — allow Vercel frontend + local dev
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'https://uniheart-five.vercel.app',
+    process.env.FRONTEND_URL,
+].filter(Boolean) as string[];
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true,
+}));
+
+// Handle preflight requests for all routes
+app.options('*', cors({
+    origin: allowedOrigins,
+    credentials: true,
+}));
+
 app.use(express.json({ limit: '10mb' }));
 
 // ─── ROUTES ─────────────────────────────────────────────────

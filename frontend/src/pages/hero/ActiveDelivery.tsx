@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import API from '../../api/axios';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://market-x-2.onrender.com';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://market-x-vppt.onrender.com';
 
 const statusFlow = ['accepted', 'picked_up', 'in_transit', 'delivered'];
 const statusInfo: Record<string, { label: string; emoji: string; nextLabel: string }> = {

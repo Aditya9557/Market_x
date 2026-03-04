@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'https://market-x-2.onrender.com/api',
+    baseURL: import.meta.env.VITE_API_URL || 'https://market-x-vppt.onrender.com/api',
 });
 
 // ── Request interceptor: attach access token ────────────────────────────────
