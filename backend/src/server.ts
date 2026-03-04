@@ -68,12 +68,6 @@ app.use(cors({
     credentials: true,
 }));
 
-// Handle preflight requests for all routes
-app.options('*', cors({
-    origin: allowedOrigins,
-    credentials: true,
-}));
-
 app.use(express.json({ limit: '10mb' }));
 
 // ─── ROUTES ─────────────────────────────────────────────────
