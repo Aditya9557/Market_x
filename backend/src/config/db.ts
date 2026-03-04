@@ -1,12 +1,18 @@
 import mongoose from 'mongoose';
 
 const connectDB = async (retries = 5, delay = 5000): Promise<void> => {
+    const uri = process.env.MONGO_URI;
+
+    if (!uri) {
+        console.error('❌ MONGO_URI environment variable is not set!');
+        console.error('   👉 Add MONGO_URI to your Render Environment Variables.');
+        // Don't crash — server will start but DB calls will fail
+        return;
+    }
+
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
-            const conn = await mongoose.connect(
-                process.env.MONGO_URI || 'mongodb://localhost:27017/project_hero',
-                { serverSelectionTimeoutMS: 10000 }
-            );
+            const conn = await mongoose.connect(uri, { serverSelectionTimeoutMS: 10000 });
             console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
             return;
         } catch (error) {
@@ -19,7 +25,7 @@ const connectDB = async (retries = 5, delay = 5000): Promise<void> => {
                 console.error(`❌ MongoDB connection failed after ${retries} attempts: ${msg}`);
                 console.error(`   👉 Go to https://cloud.mongodb.com → Network Access → Add IP Address → Allow Access from Anywhere`);
                 console.error(`   Server will keep running — API calls needing the DB will fail until MongoDB connects.`);
-                process.exit(1);
+                // Don't call process.exit(1) — let the server keep running
             }
         }
     }
