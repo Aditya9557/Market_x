@@ -3,6 +3,7 @@ dist/
 build/
 .env
 .env.*
+!.env.production
 backend/node_modules/
 frontend/node_modules/
 mobile/build/
