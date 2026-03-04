@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { Request, Response } from 'express';
 
 /**
@@ -8,7 +8,8 @@ import { Request, Response } from 'express';
  */
 
 const keyGenerator = (req: Request): string => {
-    return (req as any).user?._id?.toString() || req.ip || '127.0.0.1';
+    // Use user ID for authenticated routes, fall back to IP (with IPv6 support)
+    return (req as any).user?._id?.toString() || ipKeyGenerator(req.ip ?? '127.0.0.1');
 };
 
 const handler = (_req: Request, res: Response): void => {
