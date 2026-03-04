@@ -46,6 +46,7 @@ export const heroAcceptLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator,
+    validate: { keyGeneratorIpFallback: false }, // we use ipKeyGenerator inside keyGenerator — this is intentional
     handler,
 });
 
@@ -56,6 +57,7 @@ export const paymentLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator,
+    validate: { keyGeneratorIpFallback: false }, // we use ipKeyGenerator inside keyGenerator — this is intentional
     handler,
 });
 
@@ -75,3 +77,4 @@ export const webhookLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 });
+
