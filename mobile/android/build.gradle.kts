@@ -2,6 +2,8 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("${project(":flutter_background_geolocation").projectDir}/libs") }
+        maven { url = uri("${project(":background_fetch").projectDir}/libs") }
     }
 }
 
