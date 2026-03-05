@@ -31,7 +31,7 @@ final appDarkTheme = ThemeData(
       color: Colors.white,
     ),
   ),
-  cardTheme: CardTheme(
+  cardTheme: CardThemeData(
     color: surfaceDark,
     elevation: 0,
     shape: RoundedRectangleBorder(
