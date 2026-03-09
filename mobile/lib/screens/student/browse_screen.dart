@@ -126,17 +126,18 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                               // Logout
                               GestureDetector(
                                 onTap: () async {
+                                  final router = GoRouter.of(context);
                                   await ref.read(authProvider.notifier).logout();
-                                  if (mounted) context.go('/login');
+                                  if (mounted) router.go('/login');
                                 },
                                 child: Container(
                                   width: 42,
                                   height: 42,
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.06),
+                                    color: Colors.white.withValues(alpha: 0.06),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: Colors.white.withOpacity(0.08),
+                                      color: Colors.white.withValues(alpha: 0.08),
                                     ),
                                   ),
                                   child: const Icon(
@@ -154,10 +155,10 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                           // ─── Search Bar ───
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.04),
+                              color: Colors.white.withValues(alpha: 0.04),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.08),
+                                color: Colors.white.withValues(alpha: 0.08),
                               ),
                             ),
                             child: TextField(
@@ -227,12 +228,12 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(20),
                                         color: isSelected
-                                            ? primaryGreen.withOpacity(0.15)
-                                            : Colors.white.withOpacity(0.04),
+                                            ? primaryGreen.withValues(alpha: 0.15)
+                                            : Colors.white.withValues(alpha: 0.04),
                                         border: Border.all(
                                           color: isSelected
-                                              ? primaryGreen.withOpacity(0.5)
-                                              : Colors.white.withOpacity(0.08),
+                                              ? primaryGreen.withValues(alpha: 0.5)
+                                              : Colors.white.withValues(alpha: 0.08),
                                         ),
                                       ),
                                       child: Row(
@@ -341,12 +342,12 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   decoration: BoxDecoration(
                     color: _toastMessage!.startsWith('✅')
-                        ? primaryGreen.withOpacity(0.9)
-                        : Colors.red.withOpacity(0.9),
+                        ? primaryGreen.withValues(alpha: 0.9)
+                        : Colors.red.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withValues(alpha: 0.3),
                         blurRadius: 20,
                       ),
                     ],
@@ -422,7 +423,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                   ),
                   if (inventory <= 0)
                     Container(
-                      color: Colors.black.withOpacity(0.6),
+                      color: Colors.black.withValues(alpha: 0.6),
                       child: const Center(
                         child: Text(
                           'Out of Stock',

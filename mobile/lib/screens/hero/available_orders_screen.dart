@@ -30,7 +30,7 @@ class _AvailableOrdersScreenState extends ConsumerState<AvailableOrdersScreen> {
       final orders = await _api.getAvailableOrders();
       setState(() => _orders = orders);
     } catch (e) {
-      debugPrint('Error fetching orders: $e');
+      debugPrint('Error: $e');
     } finally {
       setState(() => _loading = false);
     }
@@ -48,12 +48,11 @@ class _AvailableOrdersScreenState extends ConsumerState<AvailableOrdersScreen> {
             content: const Text('Failed to accept order'),
             backgroundColor: Colors.red.shade700,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
     } finally {
-      if (mounted) setState(() => _acceptingId = null);
+      setState(() => _acceptingId = null);
     }
   }
 
@@ -64,392 +63,262 @@ class _AvailableOrdersScreenState extends ConsumerState<AvailableOrdersScreen> {
         child: RefreshIndicator(
           onRefresh: _fetchOrders,
           color: primaryGreen,
-          child: _loading
-              ? const Center(child: CircularProgressIndicator(color: primaryGreen))
-              : ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    // ─── Header ───
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              // ─── Header ───
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.go('/hero'),
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                      ),
+                      child: const Icon(Icons.arrow_back, color: Colors.white70, size: 20),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Available Orders',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Text(
+                        'Pick one to deliver 🏃',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ).animate().fadeIn(duration: 500.ms),
+
+              const SizedBox(height: 20),
+
+              if (_loading) ...[
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 80),
+                    child: CircularProgressIndicator(color: primaryGreen),
+                  ),
+                ),
+              ] else if (_orders.isEmpty) ...[
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 80),
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        const Text('📭', style: TextStyle(fontSize: 56)),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No orders available',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Check back in a few minutes',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ).animate().fadeIn(duration: 600.ms),
+              ] else ...[
+                // ─── Orders List ───
+                ..._orders.asMap().entries.map((entry) {
+                  final order = entry.value as Map<String, dynamic>;
+                  final orderId = order['_id'] ?? '';
+                  final orderNumber = order['orderNumber'] ?? '—';
+                  final total = (order['total'] ?? 0).toDouble();
+                  final items = order['items'] as List? ?? [];
+                  final storeName = order['store']?['name'] ?? 'Campus Shop';
+                  final deliveryAddress = order['deliveryAddress'] ?? 'Campus';
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: surfaceDark,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: Colors.grey.shade800),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Top Row - Order ID + Total
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                'Available Orders',
-                                style: TextStyle(
-                                  fontSize: 26,
+                              Text(
+                                '#$orderNumber',
+                                style: const TextStyle(
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
-                                  letterSpacing: -0.5,
+                                  fontFamily: 'monospace',
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _orders.isNotEmpty
-                                    ? '${_orders.length} order${_orders.length != 1 ? 's' : ''} waiting for a hero'
-                                    : 'No orders right now — check back soon',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey.shade500,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: primaryGreen.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: primaryGreen.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Text(
+                                  '₹${total.toStringAsFixed(0)}',
+                                  style: const TextStyle(
+                                    color: primaryGreen,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        _buildRefreshButton(),
-                      ],
-                    ).animate().fadeIn(duration: 500.ms),
 
-                    const SizedBox(height: 24),
+                          const SizedBox(height: 14),
 
-                    // ─── Orders List or Empty State ───
-                    if (_orders.isEmpty)
-                      _buildEmptyState()
-                    else
-                      ..._orders.asMap().entries.map((entry) {
-                        final order = entry.value as Map<String, dynamic>;
-                        return _buildOrderCard(order, entry.key);
-                      }),
-                  ],
-                ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRefreshButton() {
-    return GestureDetector(
-      onTap: _fetchOrders,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.06),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.08)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🔄', style: TextStyle(fontSize: 14)),
-            const SizedBox(width: 6),
-            Text(
-              'Refresh',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade400,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 60),
-      child: Column(
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFFFF6B57).withOpacity(0.08),
-              border: Border.all(
-                color: const Color(0xFFFF6B57).withOpacity(0.15),
-              ),
-            ),
-            child: const Center(
-              child: Text('🎧', style: TextStyle(fontSize: 36)),
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'No orders right now',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Stay online — new orders appear here\nas they come in!',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade500,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 28),
-          GestureDetector(
-            onTap: _fetchOrders,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
-                color: Colors.white.withOpacity(0.04),
-              ),
-              child: const Text(
-                '🔄 Refresh',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white70,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.95, 0.95));
-  }
-
-  Widget _buildOrderCard(Map<String, dynamic> order, int index) {
-    final isReady = order['status'] == 'ready';
-    final orderNumber = order['orderNumber'] ?? '—';
-    final address = order['deliveryAddress'] ?? 'Campus address';
-    final userName = order['user']?['name'] ?? 'Student';
-    final storeName = order['store']?['name'] ?? 'Store';
-    final total = (order['total'] ?? 0).toDouble();
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: surfaceDark,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isReady
-                ? const Color(0xFF0F9D58).withOpacity(0.3)
-                : Colors.grey.shade800,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Order number + status
-            Row(
-              children: [
-                // Icon
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    color: isReady
-                        ? const Color(0xFF0F9D58).withOpacity(0.12)
-                        : const Color(0xFFFF6B57).withOpacity(0.08),
-                    border: Border.all(
-                      color: isReady
-                          ? const Color(0xFF0F9D58).withOpacity(0.3)
-                          : const Color(0xFFFF6B57).withOpacity(0.15),
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      isReady ? '✅' : '📦',
-                      style: const TextStyle(fontSize: 22),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            '#$orderNumber',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              color: isReady
-                                  ? const Color(0xFF0F9D58).withOpacity(0.1)
-                                  : const Color(0xFFFFCC00).withOpacity(0.1),
-                              border: Border.all(
-                                color: isReady
-                                    ? const Color(0xFF0F9D58).withOpacity(0.3)
-                                    : const Color(0xFFFFCC00).withOpacity(0.25),
+                          // Details
+                          Row(
+                            children: [
+                              const Text('🏪', style: TextStyle(fontSize: 14)),
+                              const SizedBox(width: 6),
+                              Text(
+                                'From: $storeName',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade400,
+                                ),
                               ),
-                            ),
-                            child: Text(
-                              isReady ? '✅ Ready' : '⏳ ${order['status'] ?? 'pending'}',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: isReady
-                                    ? const Color(0xFF0F9D58)
-                                    : const Color(0xFFFFCC00),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Text('📍', style: TextStyle(fontSize: 14)),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'To: $deliveryAddress',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Text('📦', style: TextStyle(fontSize: 14)),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${items.length} item${items.length != 1 ? 's' : ''}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade400,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          // Accept Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [primaryGreen, Color(0xFF059669)],
+                                ),
+                                borderRadius: BorderRadius.circular(14),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: primaryGreen.withValues(alpha: 0.3),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton(
+                                onPressed: _acceptingId != null
+                                    ? null
+                                    : () => _acceptOrder(orderId),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                child: _acceptingId == orderId
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            '🦸 Accept Delivery',
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '📍 $address',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade400,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  ).animate().fadeIn(delay: (200 + entry.key * 100).ms).slideX(begin: 0.05);
+                }),
               ],
-            ),
-
-            const SizedBox(height: 14),
-
-            // Customer & Store
-            Row(
-              children: [
-                Text(
-                  '👤 ',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                ),
-                Text(
-                  userName,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '•',
-                  style: TextStyle(color: Colors.grey.shade600),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '🏪 ',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                ),
-                Expanded(
-                  child: Text(
-                    storeName,
-                    style: const TextStyle(
-                      color: Color(0xFFFF6B57),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 14),
-
-            // Price + Accept Button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      '₹${total.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: primaryGreen,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: primaryGreen.withOpacity(0.1),
-                        border: Border.all(
-                          color: primaryGreen.withOpacity(0.25),
-                        ),
-                      ),
-                      child: const Text(
-                        '+ delivery fee',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: primaryGreen,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                GestureDetector(
-                  onTap: _acceptingId == order['_id']
-                      ? null
-                      : () => _acceptOrder(order['_id']),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 22,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [primaryGreen, Color(0xFF059669)],
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primaryGreen.withOpacity(0.3),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: _acceptingId == order['_id']
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            '🦸 Accept',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ).animate().fadeIn(delay: (200 + index * 100).ms).slideY(begin: 0.05);
+    );
   }
 }

@@ -61,6 +61,30 @@ class _HeroDashboardScreenState extends ConsumerState<HeroDashboardScreen> {
       );
     }
 
+    if (_error != null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('😕', style: TextStyle(fontSize: 48)),
+              const SizedBox(height: 16),
+              Text(
+                _error!,
+                style: const TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _fetchData,
+                style: ElevatedButton.styleFrom(backgroundColor: primaryGreen),
+                child: const Text('Retry', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     // If not a hero, show onboarding
     if (_heroStatus == null || _heroStatus!['isHero'] != true) {
       return _buildOnboarding();
@@ -88,7 +112,7 @@ class _HeroDashboardScreenState extends ConsumerState<HeroDashboardScreen> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: primaryGreen.withOpacity(0.3),
+                      color: primaryGreen.withValues(alpha: 0.3),
                       blurRadius: 40,
                       spreadRadius: 4,
                     ),
@@ -135,10 +159,10 @@ class _HeroDashboardScreenState extends ConsumerState<HeroDashboardScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: primaryGreen.withOpacity(0.06),
+                        color: primaryGreen.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: primaryGreen.withOpacity(0.12),
+                          color: primaryGreen.withValues(alpha: 0.12),
                         ),
                       ),
                       child: Row(
@@ -189,7 +213,7 @@ class _HeroDashboardScreenState extends ConsumerState<HeroDashboardScreen> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: primaryGreen.withOpacity(0.35),
+                        color: primaryGreen.withValues(alpha: 0.35),
                         blurRadius: 24,
                         offset: const Offset(0, 8),
                       ),
@@ -280,9 +304,9 @@ class _HeroDashboardScreenState extends ConsumerState<HeroDashboardScreen> {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
+                        color: Colors.white.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                       ),
                       child: const Icon(Icons.logout, color: Colors.white54, size: 20),
                     ),
@@ -386,7 +410,7 @@ class _HeroDashboardScreenState extends ConsumerState<HeroDashboardScreen> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: (action['color'] as Color).withOpacity(0.12),
+                              color: (action['color'] as Color).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Center(

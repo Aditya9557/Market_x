@@ -93,7 +93,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white.withOpacity(0.1)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                     ),
                     child: const Text(
                       'Go Back',
@@ -133,9 +133,9 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
+                        color: Colors.white.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                       ),
                       child: const Icon(Icons.arrow_back,
                           color: Colors.white70, size: 20),
@@ -175,12 +175,12 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      primaryGreen.withOpacity(0.08),
-                      primaryGreen.withOpacity(0.02),
+                      primaryGreen.withValues(alpha: 0.08),
+                      primaryGreen.withValues(alpha: 0.02),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: primaryGreen.withOpacity(0.2)),
+                  border: Border.all(color: primaryGreen.withValues(alpha: 0.2)),
                 ),
                 child: Column(
                   children: [
@@ -255,12 +255,12 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                                   color: isCurrent
                                       ? primaryGreen
                                       : isActive
-                                          ? primaryGreen.withOpacity(0.3)
-                                          : Colors.white.withOpacity(0.06),
+                                          ? primaryGreen.withValues(alpha: 0.3)
+                                          : Colors.white.withValues(alpha: 0.06),
                                   boxShadow: isCurrent
                                       ? [
                                           BoxShadow(
-                                            color: primaryGreen.withOpacity(0.4),
+                                            color: primaryGreen.withValues(alpha: 0.4),
                                             blurRadius: 12,
                                           ),
                                         ]
@@ -284,8 +284,8 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                                   width: 2,
                                   height: 32,
                                   color: isActive
-                                      ? primaryGreen.withOpacity(0.3)
-                                      : Colors.white.withOpacity(0.06),
+                                      ? primaryGreen.withValues(alpha: 0.3)
+                                      : Colors.white.withValues(alpha: 0.06),
                                 ),
                             ],
                           ),

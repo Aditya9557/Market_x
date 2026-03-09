@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/api_client.dart';
+import '../../services/location_service.dart';
 import '../../theme.dart';
 
 class ActiveDeliveryScreen extends ConsumerStatefulWidget {
@@ -14,17 +15,44 @@ class ActiveDeliveryScreen extends ConsumerStatefulWidget {
 
 class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen> {
   final _api = ApiClient();
+  final _locationService = LocationService();
   Map<String, dynamic>? _delivery;
   bool _loading = true;
   bool _updating = false;
-  bool _locationSharing = false;
+  bool _trackingEnabled = false;
 
-  static const _statusFlow = ['accepted', 'picked_up', 'in_transit', 'delivered'];
+  static const _statusFlow = [
+    'accepted',
+    'picked_up',
+    'in_transit',
+    'delivered',
+  ];
+
   static const _statusInfo = {
-    'accepted': {'label': 'Heading to Store', 'emoji': '🏪', 'next': "I've Picked Up the Order"},
-    'picked_up': {'label': 'Order Picked Up', 'emoji': '📦', 'next': 'Start Delivery'},
-    'in_transit': {'label': 'On the Way', 'emoji': '🏃', 'next': 'Mark as Delivered ✅'},
-    'delivered': {'label': 'Delivered!', 'emoji': '✅', 'next': ''},
+    'accepted': {
+      'label': 'Order Accepted',
+      'emoji': '✅',
+      'desc': 'Head to the shop to pick up the order',
+      'action': 'Picked Up',
+    },
+    'picked_up': {
+      'label': 'Picked Up',
+      'emoji': '📦',
+      'desc': 'Go to the student\'s delivery location',
+      'action': 'Start Delivery',
+    },
+    'in_transit': {
+      'label': 'In Transit',
+      'emoji': '🚀',
+      'desc': 'Delivering to the student',
+      'action': 'Mark Delivered',
+    },
+    'delivered': {
+      'label': 'Delivered',
+      'emoji': '🎉',
+      'desc': 'Great job, Hero!',
+      'action': null,
+    },
   };
 
   @override
@@ -33,11 +61,19 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen> {
     _fetchDelivery();
   }
 
+  @override
+  void dispose() {
+    if (_trackingEnabled) {
+      _locationService.stopTracking();
+    }
+    super.dispose();
+  }
+
   Future<void> _fetchDelivery() async {
     setState(() => _loading = true);
     try {
-      final data = await _api.getActiveDelivery();
-      setState(() => _delivery = data);
+      final delivery = await _api.getActiveDelivery();
+      setState(() => _delivery = delivery);
     } catch (e) {
       debugPrint('Error: $e');
     } finally {
@@ -47,22 +83,24 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen> {
 
   Future<void> _advanceStatus() async {
     if (_delivery == null) return;
-    final currentStatus = _delivery!['status'] as String;
-    final nextMap = {
-      'accepted': 'picked_up',
-      'picked_up': 'in_transit',
-      'in_transit': 'delivered',
-    };
-    final next = nextMap[currentStatus];
-    if (next == null) return;
+    final currentStatus = _delivery!['status'] as String? ?? 'accepted';
+    final currentIdx = _statusFlow.indexOf(currentStatus);
+    if (currentIdx >= _statusFlow.length - 1) return;
+
+    final nextStatus = _statusFlow[currentIdx + 1];
+    final deliveryId = _delivery!['_id'] ?? '';
 
     setState(() => _updating = true);
     try {
-      final data = await _api.updateDeliveryStatus(_delivery!['_id'], next);
-      setState(() => _delivery = data['delivery'] ?? data);
-      if (next == 'delivered') {
-        setState(() => _locationSharing = false);
+      await _api.updateDeliveryStatus(deliveryId, nextStatus);
+
+      // Stop tracking on delivered
+      if (nextStatus == 'delivered' && _trackingEnabled) {
+        await _locationService.stopTracking();
+        setState(() => _trackingEnabled = false);
       }
+
+      await _fetchDelivery();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -70,12 +108,24 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen> {
             content: const Text('Failed to update status'),
             backgroundColor: Colors.red.shade700,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
     } finally {
-      if (mounted) setState(() => _updating = false);
+      setState(() => _updating = false);
+    }
+  }
+
+  Future<void> _toggleTracking() async {
+    if (_delivery == null) return;
+    final deliveryId = _delivery!['_id'] ?? '';
+
+    if (_trackingEnabled) {
+      await _locationService.stopTracking();
+      setState(() => _trackingEnabled = false);
+    } else {
+      await _locationService.startTracking(deliveryId, 'token');
+      setState(() => _trackingEnabled = true);
     }
   }
 
@@ -91,95 +141,76 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen> {
       return _buildNoDelivery();
     }
 
-    return _buildActiveDelivery();
+    return _buildDeliveryView();
   }
 
   Widget _buildNoDelivery() {
     return Scaffold(
       body: SafeArea(
         child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('🎧', style: TextStyle(fontSize: 64)),
-                const SizedBox(height: 20),
-                const Text(
-                  'No Active Delivery',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('🏃', style: TextStyle(fontSize: 64)),
+              const SizedBox(height: 20),
+              const Text(
+                'No active delivery',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Go to Available Orders to pick up a delivery.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [primaryGreen, Color(0xFF059669)],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primaryGreen.withOpacity(0.35),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Accept an order to start delivering',
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+              ),
+              const SizedBox(height: 32),
+              GestureDetector(
+                onTap: () => context.go('/hero/orders'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [primaryGreen, Color(0xFF059669)],
                     ),
-                    child: ElevatedButton(
-                      onPressed: () => context.go('/hero/orders'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryGreen.withValues(alpha: 0.35),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
                       ),
-                      child: const Text(
-                        'Browse Orders',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
+                    ],
+                  ),
+                  child: const Text(
+                    '📋 View Available Orders',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
                     ),
                   ),
                 ),
-              ],
-            ).animate().fadeIn(duration: 600.ms),
+              ),
+            ],
           ),
-        ),
+        ).animate().fadeIn(duration: 600.ms),
       ),
     );
   }
 
-  Widget _buildActiveDelivery() {
+  Widget _buildDeliveryView() {
     final status = _delivery!['status'] as String? ?? 'accepted';
-    final info = _statusInfo[status] ?? _statusInfo['accepted']!;
     final currentIdx = _statusFlow.indexOf(status);
-
-    final order = _delivery!['order'] as Map<String, dynamic>?;
-    final customer = _delivery!['customer'] as Map<String, dynamic>?;
-    final pickupAddr = _delivery!['pickupAddress'] ?? '—';
-    final deliveryAddr = _delivery!['deliveryAddress'] ?? '—';
-    final fee = (_delivery!['deliveryFee'] ?? 0).toDouble();
-    final tip = (_delivery!['tip'] ?? 0).toDouble();
-    final notes = _delivery!['notes'] as String?;
+    final currentInfo = _statusInfo[status] ?? _statusInfo['accepted']!;
+    final orderNumber = _delivery!['order']?['orderNumber'] ?? '—';
+    final total = (_delivery!['order']?['total'] ?? 0).toDouble();
+    final storeName = _delivery!['order']?['store']?['name'] ?? 'Campus Shop';
+    final deliveryAddress = _delivery!['order']?['deliveryAddress'] ?? 'Campus';
+    final studentName = _delivery!['order']?['user']?['name'] ?? 'Student';
+    final isDelivered = status == 'delivered';
 
     return Scaffold(
       body: SafeArea(
@@ -189,20 +220,95 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen> {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              // ─── Title ───
-              const Text(
-                'Active Delivery',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  letterSpacing: -0.5,
-                ),
+              // ─── Header ───
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.go('/hero'),
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                      ),
+                      child: const Icon(Icons.arrow_back,
+                          color: Colors.white70, size: 20),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isDelivered ? 'Delivered! 🎉' : 'Active Delivery',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Text(
+                        '#$orderNumber',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade500,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ).animate().fadeIn(duration: 500.ms),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-              // ─── Progress Stepper ───
+              // ─── Status Card ───
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      primaryGreen.withValues(alpha: 0.08),
+                      primaryGreen.withValues(alpha: 0.02),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: primaryGreen.withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      currentInfo['emoji']!,
+                      style: const TextStyle(fontSize: 48),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      currentInfo['label']!,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      currentInfo['desc']!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade400,
+                      ),
+                    ),
+                  ],
+                ),
+              ).animate().fadeIn(delay: 100.ms).scale(begin: const Offset(0.95, 0.95)),
+
+              const SizedBox(height: 16),
+
+              // ─── Progress ───
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -211,65 +317,61 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen> {
                   border: Border.all(color: Colors.grey.shade800),
                 ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Steps
+                    const Text(
+                      'Delivery Progress',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
                     Row(
                       children: _statusFlow.asMap().entries.map((entry) {
                         final idx = entry.key;
-                        final s = entry.value;
-                        final sInfo = _statusInfo[s]!;
                         final isActive = idx <= currentIdx;
                         final isCurrent = idx == currentIdx;
+                        final info = _statusInfo[entry.value]!;
+                        final isLast = idx == _statusFlow.length - 1;
 
                         return Expanded(
                           child: Row(
                             children: [
                               Container(
-                                width: 40,
-                                height: 40,
+                                width: 32,
+                                height: 32,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: isCurrent
-                                      ? const Color(0xFFFF6B57)
+                                      ? primaryGreen
                                       : isActive
-                                          ? primaryGreen
-                                          : Colors.white.withOpacity(0.06),
+                                          ? primaryGreen.withValues(alpha: 0.3)
+                                          : Colors.white.withValues(alpha: 0.06),
                                   boxShadow: isCurrent
                                       ? [
                                           BoxShadow(
-                                            color: const Color(0xFFFF6B57).withOpacity(0.4),
-                                            blurRadius: 16,
+                                            color: primaryGreen.withValues(alpha: 0.4),
+                                            blurRadius: 10,
                                           ),
                                         ]
                                       : null,
                                 ),
                                 child: Center(
-                                  child: isActive
-                                      ? Text(
-                                          sInfo['emoji']!,
-                                          style: const TextStyle(fontSize: 16),
-                                        )
-                                      : Text(
-                                          '${idx + 1}',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
+                                  child: Text(
+                                    info['emoji']!,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
                                 ),
                               ),
-                              if (idx < _statusFlow.length - 1)
+                              if (!isLast)
                                 Expanded(
                                   child: Container(
-                                    height: 3,
-                                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(2),
-                                      color: isActive && currentIdx > idx
-                                          ? primaryGreen
-                                          : Colors.white.withOpacity(0.06),
-                                    ),
+                                    height: 2,
+                                    color: isActive && idx < currentIdx
+                                        ? primaryGreen.withValues(alpha: 0.4)
+                                        : Colors.white.withValues(alpha: 0.06),
                                   ),
                                 ),
                             ],
@@ -277,33 +379,13 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen> {
                         );
                       }).toList(),
                     ),
-
-                    const SizedBox(height: 18),
-
-                    // Current Status Label
-                    Text(
-                      '${info['emoji']} ${info['label']}',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Step ${currentIdx + 1} of ${_statusFlow.length}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
                   ],
                 ),
-              ).animate().fadeIn(delay: 100.ms, duration: 500.ms),
+              ).animate().fadeIn(delay: 200.ms),
 
               const SizedBox(height: 16),
 
-              // ─── Delivery Info ───
+              // ─── Delivery Details ───
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -322,158 +404,83 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen> {
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 16),
-
-                    _buildInfoRow('Order', '#${order?['orderNumber'] ?? '—'}', mono: true),
-                    _buildInfoRow('Customer', customer?['name'] ?? '—'),
-                    _buildInfoRow('Pickup', '$pickupAddr', isAddress: true),
-                    _buildInfoRow('Drop-off', '$deliveryAddr', isAddress: true),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Container(height: 1, color: Colors.grey.shade800),
-                    ),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Delivery Fee',
-                          style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
-                        ),
-                        Text(
-                          '₹${fee.toStringAsFixed(0)}',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: primaryGreen,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    if (tip > 0) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Tip 🎁',
-                            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
-                          ),
-                          Text(
-                            '₹${tip.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFFFFCC00),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-
-                    if (notes != null && notes.isNotEmpty) ...[
-                      const SizedBox(height: 14),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.03),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade800),
-                        ),
-                        child: Text(
-                          '📝 $notes',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade400,
-                          ),
-                        ),
-                      ),
-                    ],
+                    const SizedBox(height: 14),
+                    _buildInfoRow('🏪', 'Pickup', storeName),
+                    _buildInfoRow('📍', 'Deliver To', deliveryAddress),
+                    _buildInfoRow('👤', 'Customer', studentName),
+                    _buildInfoRow('💰', 'Order Value', '₹${total.toStringAsFixed(0)}'),
                   ],
                 ),
-              ).animate().fadeIn(delay: 200.ms, duration: 500.ms),
+              ).animate().fadeIn(delay: 300.ms),
 
               const SizedBox(height: 16),
 
               // ─── Live Tracking Toggle ───
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: surfaceDark,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey.shade800),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              if (!isDelivered)
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: surfaceDark,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: Colors.grey.shade800),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
                         children: [
-                          const Text(
-                            '📍 Live Tracking',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: _trackingEnabled
+                                  ? primaryGreen.withValues(alpha: 0.12)
+                                  : Colors.white.withValues(alpha: 0.04),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Center(
+                              child: Text('📡', style: TextStyle(fontSize: 22)),
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _locationSharing
-                                ? '🟢 Broadcasting your location'
-                                : '🔴 Location sharing is off',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: _locationSharing
-                                  ? primaryGreen
-                                  : Colors.grey.shade500,
-                            ),
+                          const SizedBox(width: 14),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Live Location',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Text(
+                                _trackingEnabled
+                                    ? 'Sharing with student'
+                                    : 'Enable to share location',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() => _locationSharing = !_locationSharing);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: _locationSharing
-                              ? Colors.red.withOpacity(0.08)
-                              : primaryGreen.withOpacity(0.12),
-                          border: Border.all(
-                            color: _locationSharing
-                                ? Colors.red.withOpacity(0.3)
-                                : primaryGreen.withOpacity(0.3),
-                          ),
-                        ),
-                        child: Text(
-                          _locationSharing ? 'Stop' : 'Start',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: _locationSharing ? Colors.red : primaryGreen,
-                          ),
-                        ),
+                      Switch(
+                        value: _trackingEnabled,
+                        onChanged: (_) => _toggleTracking(),
+                        activeThumbColor: primaryGreen,
+                        activeTrackColor: primaryGreen.withValues(alpha: 0.3),
                       ),
-                    ),
-                  ],
-                ),
-              ).animate().fadeIn(delay: 300.ms, duration: 500.ms),
+                    ],
+                  ),
+                ).animate().fadeIn(delay: 350.ms),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-              // ─── Action / Celebration ───
-              if (status != 'delivered')
+              // ─── Action Button ───
+              if (!isDelivered && currentInfo['action'] != null)
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -485,7 +492,7 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: primaryGreen.withOpacity(0.35),
+                          color: primaryGreen.withValues(alpha: 0.35),
                           blurRadius: 24,
                           offset: const Offset(0, 8),
                         ),
@@ -510,7 +517,7 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen> {
                               ),
                             )
                           : Text(
-                              '${info['emoji']} ${info['next']}',
+                              '${currentInfo['action']} →',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
@@ -519,9 +526,31 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen> {
                             ),
                     ),
                   ),
-                ).animate().fadeIn(delay: 400.ms, duration: 500.ms)
-              else
-                _buildCelebration(fee, tip),
+                ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
+
+              if (isDelivered) ...[
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () => context.go('/hero'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryGreen,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      '← Back to Dashboard',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 400.ms),
+              ],
 
               const SizedBox(height: 20),
             ],
@@ -531,90 +560,36 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, {bool mono = false, bool isAddress = false}) {
+  Widget _buildInfoRow(String emoji, String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(emoji, style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: 10),
           Text(
             label,
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade500,
+            ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
+          const Spacer(),
+          Flexible(
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 color: Colors.white,
-                fontWeight: FontWeight.w500,
-                fontFamily: mono ? 'monospace' : null,
+                fontWeight: FontWeight.w600,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
       ),
     );
-  }
-
-  Widget _buildCelebration(double fee, double tip) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      child: Column(
-        children: [
-          const Text('🎉', style: TextStyle(fontSize: 64)),
-          const SizedBox(height: 16),
-          const Text(
-            'Delivery Complete!',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: primaryGreen,
-            ),
-          ),
-          const SizedBox(height: 8),
-          RichText(
-            text: TextSpan(
-              text: 'You earned ',
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
-              children: [
-                TextSpan(
-                  text: '₹${(fee + tip).toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: primaryGreen,
-                  ),
-                ),
-                const TextSpan(text: ' 💪'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 28),
-          GestureDetector(
-            onTap: () => context.go('/hero'),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
-                color: Colors.white.withOpacity(0.04),
-              ),
-              child: const Text(
-                'Back to Dashboard',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white70,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.9, 0.9));
   }
 }

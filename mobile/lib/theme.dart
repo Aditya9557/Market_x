@@ -15,7 +15,7 @@ final appDarkTheme = ThemeData(
   brightness: Brightness.dark,
   scaffoldBackgroundColor: bgDark,
   textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
-  colorScheme: ColorScheme.dark(
+  colorScheme: const ColorScheme.dark(
     primary: primaryGreen,
     secondary: primaryBlue,
     tertiary: primaryPurple,
@@ -82,7 +82,7 @@ final appDarkTheme = ThemeData(
 final appTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.light,
-  colorScheme: ColorScheme.light(
+  colorScheme: const ColorScheme.light(
     primary: primaryGreen,
     secondary: primaryBlue,
   ),

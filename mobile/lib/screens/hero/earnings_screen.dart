@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/api_client.dart';
 import '../../theme.dart';
@@ -42,50 +43,12 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
       );
     }
 
-    if (_earnings == null) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('💸', style: TextStyle(fontSize: 56)),
-              const SizedBox(height: 16),
-              const Text(
-                'Could not load earnings',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 20),
-              GestureDetector(
-                onTap: _fetchEarnings,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
-                  ),
-                  child: const Text(
-                    'Retry',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final todayEarnings = (_earnings!['todayEarnings'] ?? 0).toDouble();
-    final todayDeliveries = _earnings!['todayDeliveries'] ?? 0;
-    final totalEarnings = (_earnings!['totalEarnings'] ?? 0).toDouble();
-    final totalDeliveries = _earnings!['totalDeliveries'] ?? 0;
-    final rating = (_earnings!['rating'] ?? 0).toDouble();
-    final avg = totalDeliveries > 0 ? (totalEarnings / totalDeliveries) : 0.0;
-    final recentDeliveries = _earnings!['recentDeliveries'] as List? ?? [];
+    final todayEarnings = (_earnings?['todayEarnings'] ?? 0).toDouble();
+    final totalEarnings = (_earnings?['totalEarnings'] ?? 0).toDouble();
+    final totalDeliveries = _earnings?['totalDeliveries'] ?? 0;
+    final avgEarnings = (_earnings?['averagePerDelivery'] ?? 0).toDouble();
+    final rating = (_earnings?['rating'] ?? 5.0).toDouble();
+    final recentDeliveries = _earnings?['recentDeliveries'] as List? ?? [];
 
     return Scaffold(
       body: SafeArea(
@@ -96,132 +59,135 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
             padding: const EdgeInsets.all(20),
             children: [
               // ─── Header ───
-              const Text(
-                'Earnings 💰',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  letterSpacing: -0.5,
-                ),
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.go('/hero'),
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                      ),
+                      child: const Icon(Icons.arrow_back,
+                          color: Colors.white70, size: 20),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Earnings 💰',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Text(
+                        'Track your delivery earnings',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ).animate().fadeIn(duration: 500.ms),
-              const SizedBox(height: 4),
-              Text(
-                'Your delivery income overview',
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
-              ).animate().fadeIn(delay: 100.ms),
 
               const SizedBox(height: 24),
 
-              // ─── Stat Cards ───
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 1.3,
-                children: [
-                  _buildStatCard(
-                    icon: '💚',
-                    label: "Today's Earnings",
-                    value: '₹${todayEarnings.toStringAsFixed(0)}',
-                    sub: '$todayDeliveries deliveries',
-                    color: primaryGreen,
-                    delay: 0,
-                  ),
-                  _buildStatCard(
-                    icon: '🏆',
-                    label: 'All Time',
-                    value: '₹${totalEarnings.toStringAsFixed(0)}',
-                    sub: '$totalDeliveries deliveries',
-                    color: const Color(0xFFFF6B57),
-                    delay: 100,
-                  ),
-                  _buildStatCard(
-                    icon: '⚡',
-                    label: 'Avg per Delivery',
-                    value: '₹${avg.toStringAsFixed(0)}',
-                    sub: 'per order',
-                    color: const Color(0xFFFFCC00),
-                    delay: 200,
-                  ),
-                  _buildStatCard(
-                    icon: '⭐',
-                    label: 'Rating',
-                    value: rating > 0 ? '${rating.toStringAsFixed(1)}★' : '—',
-                    sub: 'from customers',
-                    color: primaryPurple,
-                    delay: 300,
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // ─── Instant Payout Banner ───
+              // ─── Earnings Hero Card ───
               Container(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(
-                  color: primaryGreen.withOpacity(0.06),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: primaryGreen.withOpacity(0.3),
+                  gradient: LinearGradient(
+                    colors: [
+                      primaryGreen.withValues(alpha: 0.15),
+                      primaryGreen.withValues(alpha: 0.05),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: primaryGreen.withValues(alpha: 0.25)),
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '⚡ Instant Payout',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Cash out your earnings to your debit card instantly',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade400,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      "Today's Earnings",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade400,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(height: 8),
+                    Text(
+                      '₹${todayEarnings.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w900,
+                        color: primaryGreen,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                       decoration: BoxDecoration(
+                        color: primaryGreen.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
-                        color: primaryGreen.withOpacity(0.1),
-                        border: Border.all(
-                          color: primaryGreen.withOpacity(0.25),
-                        ),
                       ),
-                      child: Opacity(
-                        opacity: 0.6,
-                        child: Text(
-                          'Coming Soon',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: primaryGreen,
-                          ),
+                      child: Text(
+                        '⭐ ${rating.toStringAsFixed(1)} rating',
+                        style: const TextStyle(
+                          color: primaryGreen,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ],
                 ),
-              ).animate().fadeIn(delay: 400.ms, duration: 500.ms),
+              ).animate().fadeIn(delay: 100.ms).scale(begin: const Offset(0.95, 0.95)),
+
+              const SizedBox(height: 16),
+
+              // ─── Stats Row ───
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatTile(
+                      '💰',
+                      'Total',
+                      '₹${totalEarnings.toStringAsFixed(0)}',
+                      primaryGreen,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildStatTile(
+                      '📦',
+                      'Deliveries',
+                      '$totalDeliveries',
+                      const Color(0xFFFF6B57),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildStatTile(
+                      '📊',
+                      'Avg/Delivery',
+                      '₹${avgEarnings.toStringAsFixed(0)}',
+                      primaryPurple,
+                    ),
+                  ),
+                ],
+              ).animate().fadeIn(delay: 200.ms),
 
               const SizedBox(height: 24),
 
@@ -233,12 +199,12 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
-              ).animate().fadeIn(delay: 450.ms),
+              ).animate().fadeIn(delay: 300.ms),
               const SizedBox(height: 12),
 
-              if (recentDeliveries.isEmpty)
+              if (recentDeliveries.isEmpty) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
                     color: surfaceDark,
                     borderRadius: BorderRadius.circular(18),
@@ -248,26 +214,18 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
                     children: [
                       const Text('📭', style: TextStyle(fontSize: 40)),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         'No deliveries yet',
                         style: TextStyle(
-                          color: Colors.white,
                           fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Accept your first order to start earning!',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade500,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade400,
                         ),
                       ),
                     ],
                   ),
-                ).animate().fadeIn(delay: 500.ms)
-              else
+                ).animate().fadeIn(delay: 400.ms),
+              ] else ...[
                 Container(
                   decoration: BoxDecoration(
                     color: surfaceDark,
@@ -275,111 +233,103 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
                     border: Border.all(color: Colors.grey.shade800),
                   ),
                   child: Column(
-                    children: [
-                      // Table header
-                      Container(
+                    children: recentDeliveries.asMap().entries.map<Widget>((entry) {
+                      final delivery = entry.value as Map<String, dynamic>;
+                      final isLast = entry.key == recentDeliveries.length - 1;
+
+                      return Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 18,
-                          vertical: 12,
+                          vertical: 16,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.03),
-                          border: Border(
-                            bottom: BorderSide(color: Colors.grey.shade800),
-                          ),
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(18),
-                            topRight: Radius.circular(18),
-                          ),
+                          border: isLast
+                              ? null
+                              : Border(
+                                  bottom: BorderSide(
+                                    color: Colors.grey.shade800,
+                                    width: 0.5,
+                                  ),
+                                ),
                         ),
                         child: Row(
-                          children: ['Order', 'Store', 'Total', 'Date']
-                              .map(
-                                (h) => Expanded(
-                                  child: Text(
-                                    h,
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: primaryGreen.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Center(
+                                child: Text('📦', style: TextStyle(fontSize: 20)),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Order #${delivery['orderNumber'] ?? '—'}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    delivery['deliveredAt'] != null
+                                        ? _formatDate(delivery['deliveredAt'])
+                                        : 'Recently',
                                     style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 1,
+                                      fontSize: 12,
                                       color: Colors.grey.shade500,
                                     ),
                                   ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '+₹${(delivery['total'] ?? 0).toStringAsFixed(0)}',
+                                  style: const TextStyle(
+                                    color: primaryGreen,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                      // Rows
-                      ...recentDeliveries.asMap().entries.map((entry) {
-                        final d = entry.value as Map<String, dynamic>;
-                        final isLast = entry.key == recentDeliveries.length - 1;
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 14,
-                          ),
-                          decoration: BoxDecoration(
-                            border: isLast
-                                ? null
-                                : Border(
-                                    bottom: BorderSide(
-                                      color: Colors.grey.shade800,
-                                      width: 0.5,
+                                const SizedBox(height: 2),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: primaryGreen.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'Delivered',
+                                    style: TextStyle(
+                                      color: primaryGreen,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '#${d['orderNumber'] ?? '—'}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                    fontFamily: 'monospace',
-                                  ),
                                 ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  '${d['store'] ?? '—'}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade400,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  '₹${(d['total'] ?? 0).toStringAsFixed(0)}',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
-                                    color: primaryGreen,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  d['deliveredAt'] != null
-                                      ? _formatDate(d['deliveredAt'])
-                                      : '—',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ).animate().fadeIn(delay: (500 + entry.key * 60).ms);
-                      }),
-                    ],
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                   ),
-                ).animate().fadeIn(delay: 500.ms),
+                ).animate().fadeIn(delay: 400.ms),
+              ],
 
               const SizedBox(height: 20),
             ],
@@ -389,71 +339,45 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
     );
   }
 
-  Widget _buildStatCard({
-    required String icon,
-    required String label,
-    required String value,
-    required String sub,
-    required Color color,
-    required int delay,
-  }) {
+  Widget _buildStatTile(String icon, String label, String value, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: surfaceDark,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade800),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text(icon, style: const TextStyle(fontSize: 20)),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade500,
-                ),
-              ),
-            ],
+          Text(icon, style: const TextStyle(fontSize: 20)),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: color,
-                ),
-              ),
-              Text(
-                sub,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-            ],
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade500,
+            ),
           ),
         ],
       ),
-    ).animate().fadeIn(delay: (200 + delay).ms).scale(
-          begin: const Offset(0.95, 0.95),
-          end: const Offset(1, 1),
-        );
+    );
   }
 
   String _formatDate(String dateStr) {
     try {
       final date = DateTime.parse(dateStr);
-      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      ];
       return '${date.day} ${months[date.month - 1]}';
     } catch (_) {
       return '—';

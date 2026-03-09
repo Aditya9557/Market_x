@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../services/api_client.dart';
@@ -22,7 +23,6 @@ class LocationService {
   
   io.Socket? _socket;
   String? _deliveryId;
-  String? _token;
   bool _isTracking = false;
   
   /// Initialize the background geolocation engine.
@@ -51,7 +51,6 @@ class LocationService {
   
   /// Connect Socket.io for real-time location broadcasting.
   void connectSocket(String token) {
-    _token = token;
     _socket = io.io(
       'http://localhost:5001',
       io.OptionBuilder()
@@ -61,19 +60,23 @@ class LocationService {
     );
     
     _socket!.onConnect((_) {
-      print('🔌 Socket connected for location tracking');
+      debugPrint('🔌 Socket connected for location tracking');
     });
     
     _socket!.onDisconnect((_) {
-      print('🔌 Socket disconnected');
+      debugPrint('🔌 Socket disconnected');
     });
   }
   
   /// Start tracking and broadcasting location for a delivery.
-  Future<void> startTracking(String deliveryId) async {
+  Future<void> startTracking(String deliveryId, [String? token]) async {
     if (_isTracking) return;
     _deliveryId = deliveryId;
     _isTracking = true;
+    
+    if (token != null && _socket == null) {
+      connectSocket(token);
+    }
     
     // Listen to location updates
     bg.BackgroundGeolocation.onLocation((bg.Location location) {
@@ -82,19 +85,19 @@ class LocationService {
     
     // Listen to motion changes (for battery optimization awareness)
     bg.BackgroundGeolocation.onMotionChange((bg.Location location) {
-      print('🏃 Motion change: isMoving=${location.isMoving}');
+      debugPrint('🏃 Motion change: isMoving=${location.isMoving}');
     });
     
     // Listen to activity changes (still, walking, in_vehicle, etc.)
     bg.BackgroundGeolocation.onActivityChange((bg.ActivityChangeEvent event) {
-      print('🎯 Activity: ${event.activity} (${event.confidence}%)');
+      debugPrint('🎯 Activity: ${event.activity} (${event.confidence}%)');
     });
     
     // Start the location engine
     await bg.BackgroundGeolocation.start();
     await bg.BackgroundGeolocation.changePace(true); // Force into moving state
     
-    print('📍 Location tracking started for delivery: $deliveryId');
+    debugPrint('📍 Location tracking started for delivery: $deliveryId');
   }
   
   /// Stop tracking and clean up.
@@ -103,7 +106,7 @@ class LocationService {
     _deliveryId = null;
     
     await bg.BackgroundGeolocation.stop();
-    print('📍 Location tracking stopped');
+    debugPrint('📍 Location tracking stopped');
   }
   
   /// Handle each location update.

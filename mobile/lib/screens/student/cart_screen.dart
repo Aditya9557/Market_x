@@ -106,7 +106,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: primaryGreen.withOpacity(0.35),
+                        color: primaryGreen.withValues(alpha: 0.35),
                         blurRadius: 24,
                         offset: const Offset(0, 8),
                       ),
@@ -180,7 +180,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF6B57).withOpacity(0.05),
+                      color: const Color(0xFFFF6B57).withValues(alpha: 0.05),
                       border: Border(
                         bottom: BorderSide(color: Colors.grey.shade800),
                       ),
@@ -229,7 +229,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.04),
+                              color: Colors.white.withValues(alpha: 0.04),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.grey.shade800),
                             ),
@@ -398,7 +398,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: primaryGreen.withOpacity(0.35),
+                        color: primaryGreen.withValues(alpha: 0.35),
                         blurRadius: 20,
                         offset: const Offset(0, 6),
                       ),
